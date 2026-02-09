@@ -110,5 +110,5 @@ Use this checklist to track your progress through the test.
 Use this space to track any issues, questions, or design decisions:
 
 ```
-[Your notes here]
+I have my doc in the DOC.md file in the go-backend directory
 ```
