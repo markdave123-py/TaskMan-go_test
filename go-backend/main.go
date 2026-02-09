@@ -1,53 +1,18 @@
 package main
 
 import (
+	"go-backend/server"
+	"go-backend/storage/file"
+	"log"
 	"os"
+	"time"
+
+	"go-backend/storage/cache"
 )
 
 const (
 	defaultPort = "8080"
 )
-
-type User struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Role  string `json:"role"`
-}
-
-type Task struct {
-	ID     int    `json:"id"`
-	Title  string `json:"title"`
-	Status string `json:"status"`
-	UserID int    `json:"userId"`
-}
-
-type UsersResponse struct {
-	Users []User `json:"users"`
-	Count int    `json:"count"`
-}
-
-type TasksResponse struct {
-	Tasks []Task `json:"tasks"`
-	Count int    `json:"count"`
-}
-
-type StatsResponse struct {
-	Users struct {
-		Total int `json:"total"`
-	} `json:"users"`
-	Tasks struct {
-		Total      int `json:"total"`
-		Pending    int `json:"pending"`
-		InProgress int `json:"inProgress"`
-		Completed  int `json:"completed"`
-	} `json:"tasks"`
-}
-
-type HealthResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
 
 func main() {
 	// Get port from environment or use default
@@ -56,6 +21,15 @@ func main() {
 		port = defaultPort
 	}
 
-	server := NewServer(store)
+	// Initialize file-based data store
+	store, err := file.NewFileStore("data/data.json")
+	if err != nil {
+		log.Fatalf("failed to init store: %v", err)
+	}
+
+	// Initialize Redis cache with 2 minute TTL
+	cache := cache.NewRedisCache("localhost:6380", 2*time.Minute)
+
+	server := server.NewServer(store, cache)
 	server.Start(port)
 }

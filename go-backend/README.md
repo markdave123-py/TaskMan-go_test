@@ -2,6 +2,8 @@
 
 This Go application consumes the Node.js backend API and demonstrates various API interactions.
 
+A production-style Go backend providing REST APIs for managing users and tasks, designed with clean architecture, persistence, caching, middleware, and strong error handling.
+
 ## Setup
 
 1. Make sure Go is installed (version 1.21 or higher)
