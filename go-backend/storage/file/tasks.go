@@ -89,7 +89,7 @@ func (fs *FileStore) UpdateTask(
 		fs.data.Tasks[i] = task
 
 		if err := fs.save(); err != nil {
-			return storage.Task{}, true, err
+			return storage.Task{}, false, err
 		}
 
 		return task, true, nil
