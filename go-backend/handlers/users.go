@@ -100,6 +100,11 @@ func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, exists := h.Store.GetUserByEmail(req.Email); exists {
+		http.Error(w, "email already in use", http.StatusBadRequest)
+		return
+	}
+
 	user, err := h.Store.CreateUser(req.Name, req.Email, req.Role)
 	if err != nil {
 		// log err

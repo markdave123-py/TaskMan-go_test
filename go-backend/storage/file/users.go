@@ -20,6 +20,18 @@ func (fs *FileStore) GetUserByID(id int) (*storage.User, bool) {
 	return nil, false
 }
 
+func (fs *FileStore) GetUserByEmail(email string) (*storage.User, bool) {
+	fs.mu.RLock()
+	defer fs.mu.RUnlock()
+
+	for _, u := range fs.data.Users {
+		if u.Email == email {
+			return &u, true
+		}
+	}
+	return nil, false
+}
+
 func (fs *FileStore) CreateUser(name, email, role string) (storage.User, error) {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()

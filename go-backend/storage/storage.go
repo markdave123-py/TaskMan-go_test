@@ -5,6 +5,7 @@ type DataStore interface {
 	GetUsers() []User
 	GetUserByID(id int) (*User, bool)
 	CreateUser(name, email, role string) (User, error)
+	GetUserByEmail(email string) (*User, bool)
 
 	// Tasks
 	GetTasks(status string, userID *int) []Task
