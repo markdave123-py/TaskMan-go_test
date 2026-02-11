@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,6 +10,8 @@ import (
 	"go-backend/storage"
 	"go-backend/storage/cache"
 	"go-backend/util"
+
+	"github.com/sirupsen/logrus"
 )
 
 // UserHandler handles HTTP requests related to users.
@@ -107,8 +108,12 @@ func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.Store.CreateUser(req.Name, req.Email, req.Role)
 	if err != nil {
-		// log err
-		fmt.Printf("error creating user: %v\n", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "handler",
+			"handler":   "users",
+			"operation": "create_user",
+			"email":     req.Email,
+		}).Error("create user failed")
 		http.Error(w, "failed to create user", http.StatusInternalServerError)
 		return
 	}

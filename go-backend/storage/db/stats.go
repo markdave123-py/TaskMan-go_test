@@ -2,7 +2,8 @@ package db
 
 import (
 	"go-backend/storage"
-	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (s *SQLiteStore) GetStats() storage.Stats {
@@ -19,7 +20,11 @@ func (s *SQLiteStore) GetStats() storage.Stats {
 	// Task status breakdown
 	rows, err := s.db.Query("SELECT status, COUNT(*) FROM tasks GROUP BY status")
 	if err != nil {
-		log.Fatalf("GetStats: query task status breakdown: %v", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "GetStats",
+		}).Error("query task status breakdown failed")
 		return stats
 	}
 	defer rows.Close()

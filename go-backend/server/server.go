@@ -1,11 +1,13 @@
 package server
 
 import (
+	"net/http"
+
 	"go-backend/middleware"
 	"go-backend/storage"
 	"go-backend/storage/cache"
-	"log"
-	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Server represents the HTTP server and its dependencies.
@@ -34,10 +36,14 @@ func (s *Server) Start(port string) {
 		middleware.LoggingMiddleware(http.DefaultServeMux),
 	)
 
-	log.Printf("Go backend server starting on http://localhost:%s", port)
-	log.Printf("Serving data directly from Go backend")
+	logrus.WithFields(logrus.Fields{
+		"component": "server",
+		"event":     "startup",
+		"port":      port,
+		"addr":      "http://localhost:" + port,
+	}).Info("HTTP server listening")
 
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+		logrus.WithError(err).WithField("component", "server").Fatal("server failed to start")
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
 
@@ -51,6 +52,13 @@ func (s *rateLimiterStore) Middleware(next http.Handler) http.Handler {
 		limiter := s.getLimiter(ip)
 
 		if !limiter.Allow() {
+			logrus.WithFields(logrus.Fields{
+				"component": "middleware",
+				"middleware": "rate_limiter",
+				"client_ip": ip,
+				"path":      r.URL.Path,
+				"method":    r.Method,
+			}).Warn("rate limit exceeded")
 			w.Header().Set("Retry-After", "60")
 			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 			return

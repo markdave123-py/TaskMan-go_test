@@ -2,8 +2,10 @@ package db
 
 import (
 	"fmt"
+
 	"go-backend/storage"
-	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (s *SQLiteStore) GetTasks(status string, userID *int) []storage.Task {
@@ -22,7 +24,12 @@ func (s *SQLiteStore) GetTasks(status string, userID *int) []storage.Task {
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
-		log.Printf("GetTasks: query tasks: %v", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "GetTasks",
+			"status":    status,
+		}).Error("query tasks failed")
 		return []storage.Task{}
 	}
 	defer rows.Close()
@@ -47,7 +54,12 @@ func (s *SQLiteStore) GetTaskByID(id int) (storage.Task, bool) {
 	var t storage.Task
 	err := row.Scan(&t.ID, &t.Title, &t.Status, &t.UserID)
 	if err != nil {
-		log.Printf("GetTaskByID: scan task: %v", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "GetTaskByID",
+			"task_id":   id,
+		}).Error("scan task failed")
 		return storage.Task{}, false
 	}
 
@@ -60,7 +72,12 @@ func (s *SQLiteStore) CreateTask(title, status string, userID int) (storage.Task
 		title, status, userID,
 	)
 	if err != nil {
-		log.Printf("CreateTask: insert task: %v", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "CreateTask",
+			"title":     title,
+		}).Error("insert task failed")
 		return storage.Task{}, fmt.Errorf("insert task: %w", err)
 	}
 
@@ -114,7 +131,12 @@ func (s *SQLiteStore) UpdateTask(
 
 	result, err := s.db.Exec(query, args...)
 	if err != nil {
-		log.Printf("UpdateTask: update task: %v", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "UpdateTask",
+			"task_id":   id,
+		}).Error("update task failed")
 		return storage.Task{}, false, fmt.Errorf("update task: %w", err)
 	}
 

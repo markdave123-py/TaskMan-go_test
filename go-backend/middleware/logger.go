@@ -1,9 +1,11 @@
 package middleware
 
 import (
-	"log"
+	"net"
 	"net/http"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // loggingResponseWriter wraps http.ResponseWriter to capture the status code for logging.
@@ -25,7 +27,7 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
-// LoggingMiddleware is an HTTP middleware that logs the method, path, status code, and duration of each request.
+// LoggingMiddleware is an HTTP middleware that logs each request with structured fields.
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -34,13 +36,20 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		duration := time.Since(start)
+		clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
 
-		log.Printf(
-			"method=%s path=%s status=%d duration=%s",
-			r.Method,
-			r.URL.Path,
-			lrw.statusCode,
-			duration,
-		)
+		fields := logrus.Fields{
+			"component":   "http",
+			"method":     r.Method,
+			"path":       r.URL.Path,
+			"status":     lrw.statusCode,
+			"duration_ms": duration.Milliseconds(),
+			"client_ip":  clientIP,
+		}
+		if r.URL.RawQuery != "" {
+			fields["query"] = r.URL.RawQuery
+		}
+
+		logrus.WithFields(fields).Info("request completed")
 	})
 }

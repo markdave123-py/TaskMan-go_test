@@ -3,9 +3,9 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/sirupsen/logrus"
 )
 
 type SQLiteStore struct {
@@ -55,11 +55,13 @@ func (s *SQLiteStore) migrate() error {
 
 func (s *SQLiteStore) IsHealthy() bool {
 	err := s.db.Ping()
-
 	if err != nil {
-		log.Println("Database health check failed:", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "health_check",
+		}).Warn("database health check failed")
 		return false
 	}
 	return true
-
 }

@@ -1,15 +1,14 @@
 package main
 
 import (
-	"go-backend/server"
-	"go-backend/storage"
-	"go-backend/storage/db"
-	"go-backend/storage/file"
-	"log"
 	"os"
 	"time"
 
+	"go-backend/server"
+	"go-backend/storage"
 	"go-backend/storage/cache"
+	"go-backend/storage/db"
+	"go-backend/storage/file"
 
 	"github.com/sirupsen/logrus"
 )
@@ -19,51 +18,54 @@ const (
 )
 
 func init() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		FieldMap: logrus.FieldMap{
+			logrus.FieldKeyMsg: "message",
+		},
+	})
 	logrus.SetLevel(logrus.InfoLevel)
 }
 
 func main() {
-	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
-	// Storage driver selection
 	driver := os.Getenv("STORAGE_DRIVER")
 	if driver == "" {
 		driver = "file"
 	}
 
+	log := logrus.WithFields(logrus.Fields{
+		"component": "main",
+		"port":      port,
+		"driver":    driver,
+	})
+
 	var store storage.DataStore
 	var err error
 
 	switch driver {
-
-	// SQLite storage
 	case "sqlite":
-		log.Println("using sqlite storage")
+		log.Info("initializing SQLite storage")
 		store, err = db.NewSQLiteStore("data/app.db")
 		if err != nil {
-			log.Fatalf("failed to initialize sqlite store: %v", err)
+			log.WithError(err).Fatal("failed to initialize SQLite store")
 		}
-
-	// File-based storage
 	case "file":
-		log.Println("using file storage")
+		log.Info("initializing file storage")
 		store, err = file.NewFileStore("data/data.json")
 		if err != nil {
-			log.Fatalf("failed to initialize file store: %v", err)
+			log.WithError(err).Fatal("failed to initialize file store")
 		}
-
 	default:
-		log.Fatalf("unknown STORAGE_DRIVER: %s", driver)
+		log.WithField("driver", driver).Fatal("unknown STORAGE_DRIVER")
 	}
 
-	// Initialize Redis cache with 2 minute TTL
-	cache := cache.NewRedisCache("localhost:6380", 2*time.Minute)
+	log.Info("storage initialized successfully")
 
-	server := server.NewServer(store, cache)
-	server.Start(port)
+	cacheSvc := cache.NewRedisCache("localhost:6380", 2*time.Minute)
+	srv := server.NewServer(store, cacheSvc)
+	srv.Start(port)
 }

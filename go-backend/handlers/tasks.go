@@ -10,6 +10,8 @@ import (
 	"go-backend/storage"
 	"go-backend/storage/cache"
 	"go-backend/util"
+
+	"github.com/sirupsen/logrus"
 )
 
 // TaskHandler handles HTTP requests related to tasks.
@@ -116,6 +118,12 @@ func (h *TaskHandler) TaskByID(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "handler",
+			"handler":   "tasks",
+			"operation": "update_task",
+			"task_id":   id,
+		}).Error("update task failed")
 		http.Error(w, "failed to update task", http.StatusInternalServerError)
 		return
 	}

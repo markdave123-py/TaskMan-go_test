@@ -3,14 +3,20 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
 	"go-backend/storage"
-	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (s *SQLiteStore) GetUsers() []storage.User {
 	rows, err := s.db.Query("SELECT id, name, email, role FROM users")
 	if err != nil {
-		log.Printf("GetUsers: query users: %v", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "GetUsers",
+		}).Error("query users failed")
 		return []storage.User{}
 	}
 	defer rows.Close()
@@ -35,8 +41,13 @@ func (s *SQLiteStore) GetUserByID(id int) (*storage.User, bool) {
 	var u storage.User
 	err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Role)
 	if err != nil {
-		log.Printf("GetUser: query user: %v", err)
-		return &storage.User{}, false
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "GetUserByID",
+			"user_id":   id,
+		}).Error("query user failed")
+		return nil, false
 	}
 
 	return &u, true
@@ -51,9 +62,13 @@ func (s *SQLiteStore) GetUserByEmail(email string) (*storage.User, bool) {
 	var user storage.User
 	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Role)
 	if err != nil {
-		log.Printf("GetUser: query user: %v", err)
-		if err == sql.ErrNoRows {
-			return nil, false
+		if err != sql.ErrNoRows {
+			logrus.WithError(err).WithFields(logrus.Fields{
+				"component": "storage",
+				"driver":    "sqlite",
+				"operation": "GetUserByEmail",
+				"email":     email,
+			}).Error("query user by email failed")
 		}
 		return nil, false
 	}
@@ -67,7 +82,12 @@ func (s *SQLiteStore) CreateUser(name, email, role string) (storage.User, error)
 		name, email, role,
 	)
 	if err != nil {
-		log.Printf("CreateUser: query users: %v", err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"component": "storage",
+			"driver":    "sqlite",
+			"operation": "CreateUser",
+			"email":     email,
+		}).Error("insert user failed")
 		return storage.User{}, fmt.Errorf("insert user: %w", err)
 	}
 
